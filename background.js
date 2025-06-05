@@ -1,23 +1,22 @@
 const domainMap = new Map();
 
-// Listen to requests
 chrome.webRequest.onCompleted.addListener(
   (details) => {
-    const url = new URL(details.url);
-    const domain = url.hostname;
-    const tabId = details.tabId;
-    if (tabId < 0) return;
-
-    if (!domainMap.has(tabId)) {
-      domainMap.set(tabId, new Set());
+    if (details.tabId < 0) return;
+    try {
+      const url = new URL(details.url);
+      const hostname = url.hostname;
+      if (!domainMap.has(details.tabId)) {
+        domainMap.set(details.tabId, new Set());
+      }
+      domainMap.get(details.tabId).add(hostname);
+    } catch (e) {
+      // invalid URL
     }
-
-    domainMap.get(tabId).add(domain);
   },
   { urls: ["<all_urls>"] }
 );
 
-// Listen for popup requests
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "getDomains") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -25,6 +24,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const domains = Array.from(domainMap.get(tabId) || []);
       sendResponse({ domains });
     });
-    return true; // async response
+    return true;
   }
 });
