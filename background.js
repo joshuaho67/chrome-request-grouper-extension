@@ -27,10 +27,24 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "getDomains") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0].id;
-      const domains = Array.from(domainMap.get(tabId) || []);
+      if (!tabs.length) {
+        sendResponse({ domains: [] });
+        return;
+      }
+      const tab = tabs[0];
+      // Prevent chrome:// and restricted URLs access
+      const url = tab.url || "";
+      if (
+        url.startsWith("chrome://") ||
+        url.startsWith("chrome-extension://") ||
+        url.startsWith("https://chrome.google.com/webstore")
+      ) {
+        sendResponse({ domains: [], error: "Cannot access this page." });
+        return;
+      }
+      const domains = Array.from(domainMap.get(tab.id) || []);
       sendResponse({ domains });
     });
-    return true; // async
+    return true; // async response
   }
 });

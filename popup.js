@@ -1,5 +1,6 @@
 const list = document.getElementById("domain-list");
 const refreshBtn = document.getElementById("refresh");
+const errorDiv = document.getElementById("error");
 
 // Naive registered domain extractor (last two parts)
 function getRegisteredDomain(hostname) {
@@ -32,12 +33,24 @@ function groupDomains(domains) {
 }
 
 function loadDomains() {
+  errorDiv.textContent = "";
   chrome.runtime.sendMessage({ type: "getDomains" }, (response) => {
-    if (!response || !response.domains) {
-      list.innerHTML = "<li>No data available</li>";
+    if (!response) {
+      errorDiv.textContent = "No response from background script.";
+      list.innerHTML = "";
       return;
     }
-    const grouped = groupDomains(response.domains);
+    if (response.error) {
+      errorDiv.textContent = response.error;
+      list.innerHTML = "";
+      return;
+    }
+    const domains = response.domains || [];
+    if (domains.length === 0) {
+      list.innerHTML = "<li>No domains recorded yet.</li>";
+      return;
+    }
+    const grouped = groupDomains(domains);
     list.innerHTML = "";
     grouped.forEach((domain) => {
       const li = document.createElement("li");
