@@ -11,11 +11,18 @@ chrome.webRequest.onCompleted.addListener(
       }
       domainMap.get(details.tabId).add(hostname);
     } catch (e) {
-      // invalid URL
+      // Ignore invalid URLs
     }
   },
   { urls: ["<all_urls>"] }
 );
+
+// Clear stored domains when tab reloads or navigates
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "loading") {
+    domainMap.delete(tabId);
+  }
+});
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "getDomains") {
@@ -24,6 +31,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const domains = Array.from(domainMap.get(tabId) || []);
       sendResponse({ domains });
     });
-    return true;
+    return true; // async
   }
 });
