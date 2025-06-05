@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Domain Request Viewer",
+  "version": "1.0",
+  "description": "Shows unique domains accessed by the current tab",
+  "permissions": ["tabs", "scripting", "webRequest"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "View Domains"
+  }
+}
